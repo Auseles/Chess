@@ -94,7 +94,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Resource Include="Images\BlackBishop.png" />
   </ItemGroup>
@@ -110,6 +109,9 @@
     <Resource Include="Images\WhitePawn.png" />
     <Resource Include="Images\WhiteQueen.png" />
     <Resource Include="Images\WhiteRook.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="1.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
