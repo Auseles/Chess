@@ -47,19 +47,19 @@ namespace Chess
             SetStartingLocation();
             RedriwingFigure();
 
-            boardRules.Add(1, 900);
-            boardRules.Add(2, 90);
-            boardRules.Add(3, 30);
-            boardRules.Add(4, 30);
-            boardRules.Add(5, 50);
-            boardRules.Add(6, 10);
+            boardRules.Add(1, -900);
+            boardRules.Add(2, -90);
+            boardRules.Add(3, -30);
+            boardRules.Add(4, -30);
+            boardRules.Add(5, -50);
+            boardRules.Add(6, -10);
 
-            boardRules.Add(7, -900);
-            boardRules.Add(8, -90);
-            boardRules.Add(9, -30);
-            boardRules.Add(10, -30);
-            boardRules.Add(11, -50);
-            boardRules.Add(12, -10);
+            boardRules.Add(7, 900);
+            boardRules.Add(8, 90);
+            boardRules.Add(9, 30);
+            boardRules.Add(10, 30);
+            boardRules.Add(11, 50);
+            boardRules.Add(12, 10);
 
             chessRules.Add(1, KingRules);
             chessRules.Add(2, QueenRules);
@@ -79,6 +79,8 @@ namespace Chess
             movies.Add(2, new List<Move>());
             movies.Add(3, new List<Move>());
             movies.Add(4, new List<Move>());
+            movies.Add(5, new List<Move>());
+            movies.Add(6, new List<Move>());
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -264,7 +266,7 @@ namespace Chess
                 MessageBox.Show("igrok hod");
                 turn++;
                 CheckTurn();
-                //CheckEndGame();
+                CheckEndGame();
             }
             else
             {
@@ -275,7 +277,7 @@ namespace Chess
                 }
                 cnt = 0;
                 var watch = Stopwatch.StartNew();
-                var MaxRate = Minimax(4, true, int.MinValue, int.MaxValue);
+                var MaxRate = SuperMiniMax(2, false);
                 watch.Stop();
                 MessageBox.Show("Обработано ходов:" + cnt.ToString() + " Время выполнения " + watch.Elapsed + " maxvalue " + MaxRate);
                 IntMap[MaxRate.Item3, MaxRate.Item4] = IntMap[MaxRate.Item1, MaxRate.Item2];
@@ -283,7 +285,7 @@ namespace Chess
                 IntMap[MaxRate.Item1, MaxRate.Item2] = 0;
                 StrMap[MaxRate.Item1, MaxRate.Item2] = "";
                 RedriwingFigure();
-                //CheckEndGame();
+                CheckEndGame();
             }
         }
 
@@ -707,6 +709,32 @@ namespace Chess
                 }
             }
         }
+        private Tuple<int,int,int,int> SuperMiniMax(int depth, bool isAPlayer)
+        {
+            movies.TryGetValue(depth, out List<Move> moves);
+            SearchAllMoves(isAPlayer, depth);
+            int x1max = 0, y1max = 0, x2max = 0, y2max = 0, maxEval = int.MinValue;
+            foreach (var move in moves)
+            {
+                int IntBuff1 = IntMap[move.X1, move.Y1];
+                int IntBuff2 = IntMap[move.X2, move.Y2];
+                IntMap[move.X2, move.Y2] = IntMap[move.X1, move.Y1];
+                IntMap[move.X1, move.Y1] = 0;
+                var value = Minimax(depth - 1, !isAPlayer, int.MinValue, int.MaxValue).Item5;
+                Console.WriteLine($"minEval {maxEval} depth {depth} x1 {move.X1} y1 {move.Y1} x2 {move.X2} y2 {move.Y2}");
+                if (value >= maxEval)
+                {
+                    maxEval = value;
+                    x1max = move.X1;
+                    y1max = move.Y1;
+                    x2max = move.X2;
+                    y2max = move.Y2;
+                }
+                IntMap[move.X1, move.Y1] = IntBuff1;
+                IntMap[move.X2, move.Y2] = IntBuff2;
+            }
+            return Tuple.Create(x1max,y1max, x2max, y2max);
+        }
 
         private Tuple<int, int, int, int, int> Minimax(int depth, bool isAPlayer, int alpha, int beta)
         {
@@ -715,7 +743,7 @@ namespace Chess
                 return Tuple.Create(0, 0, 0, 0, RateBoard());
             movies.TryGetValue(depth, out List<Move> moves);
             SearchAllMoves(isAPlayer, depth);
-            if (isAPlayer)
+            if (!isAPlayer)
             {
                 int x1max = 0, y1max = 0, x2max = 0, y2max = 0, maxEval = int.MinValue;
                 foreach (var move in moves)
@@ -727,22 +755,13 @@ namespace Chess
                     if (movies.TryGetValue(depth - 1, out List<Move> nextLevelMove))
                         nextLevelMove.Clear();
                     maxEval = Math.Max(maxEval, Minimax(depth - 1, !isAPlayer, alpha, beta).Item5);
-                    if (maxEval != 0)
-                        Console.WriteLine($"maxEval {maxEval} alpha {alpha} beta {beta} depth {depth}");
                     IntMap[move.X1, move.Y1] = IntBuff1;
                     IntMap[move.X2, move.Y2] = IntBuff2;
-                    if (maxEval >= beta)
-                    {
-                        if (depth == 4)
-                        {
-                            x1max = move.X1;
-                            y1max = move.Y1;
-                            x2max = move.X2;
-                            y2max = move.Y2;
-                        }
-                        break;
-                    }
                     alpha = Math.Max(alpha, maxEval);
+                    if (beta <= alpha)
+                    {
+                        return Tuple.Create(0, 0, 0, 0, maxEval);
+                    }
                 }
                 return Tuple.Create(x1max, y1max, x2max, y2max, maxEval);
             }
@@ -758,20 +777,15 @@ namespace Chess
                     if (movies.TryGetValue(depth - 1, out List<Move> nextLevelMove))
                         nextLevelMove.Clear();
                     minEval = Math.Min(minEval, Minimax(depth - 1, !isAPlayer, alpha, beta).Item5);
-                    if (minEval != 0)
-                        Console.WriteLine($"minEval {minEval} alpha {alpha} beta {beta} depth {depth}");
+                    if (minEval != 0 && depth == 4)
+                        Console.WriteLine($"minEval {minEval} alpha {alpha} beta {beta} depth {depth} x1 {move.X1} y1 {move.Y1} x2 {move.X2} y2 {move.Y2}");
                     IntMap[move.X1, move.Y1] = IntBuff1;
                     IntMap[move.X2, move.Y2] = IntBuff2;
-                    if (minEval >= alpha)
-                    {
-                        if (depth == 4)
-                        {
-                            x1max = move.X1; y1max = move.Y1;
-                            x2max = move.X2; y2max = move.Y2;
-                        }
-                        break;
-                    }
                     beta = Math.Min(beta, minEval);
+                    if (beta <= alpha)
+                    {
+                        return Tuple.Create(0,0,0,0,minEval);
+                    }
                 }
                 return Tuple.Create(x1max, y1max, x2max, y2max, minEval);
             }
