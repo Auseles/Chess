@@ -713,7 +713,8 @@ namespace Chess
         {
             movies.TryGetValue(depth, out List<Move> moves);
             SearchAllMoves(isAPlayer, depth);
-            int x1max = 0, y1max = 0, x2max = 0, y2max = 0, maxEval = int.MinValue;
+            int x1max = 0, y1max = 0, x2max = 0, y2max = 0;
+            double maxEval = int.MinValue;
             foreach (var move in moves)
             {
                 int IntBuff1 = IntMap[move.X1, move.Y1];
@@ -736,7 +737,7 @@ namespace Chess
             return Tuple.Create(x1max,y1max, x2max, y2max);
         }
 
-        private Tuple<int, int, int, int, int> Minimax(int depth, bool isAPlayer, int alpha, int beta)
+        private Tuple<int, int, int, int, double> Minimax(int depth, bool isAPlayer, double alpha, double beta)
         {
             cnt++;
             if (depth == 0)
@@ -745,7 +746,8 @@ namespace Chess
             SearchAllMoves(isAPlayer, depth);
             if (!isAPlayer)
             {
-                int x1max = 0, y1max = 0, x2max = 0, y2max = 0, maxEval = int.MinValue;
+                int x1max = 0, y1max = 0, x2max = 0, y2max = 0;
+                double maxEval = double.MinValue;
                 foreach (var move in moves)
                 {
                     int IntBuff1 = IntMap[move.X1, move.Y1];
@@ -767,7 +769,8 @@ namespace Chess
             }
             else
             {
-                int x1max = 0, y1max = 0, x2max = 0, y2max = 0, minEval = int.MaxValue;
+                int x1max = 0, y1max = 0, x2max = 0, y2max = 0;
+                double minEval = int.MaxValue;
                 foreach (var move in moves)
                 {
                     int IntBuff1 = IntMap[move.X1, move.Y1];
@@ -792,16 +795,42 @@ namespace Chess
         }
 
         // Оценка доски
-        private int RateBoard()
+        private double RateBoard()
         {
             var map = IntMap;
-            int BoardRate = 0;
+            double BoardRate = 0;
             for (int i = 0; i < 8; i++)
             {
                 for (int j = 0; j < 8; j++)
                 {
+                    double coef = 0;
+                    if (map[i, j] == 1)
+                        coef = kingEvalWhite[i, j];
+                    if (map[i, j] == 2)
+                        coef = evalQueen[i, j];
+                    if (map[i, j] == 3)
+                        coef = bishopEvalWhite[i, j];
+                    if (map[i, j] == 4)
+                        coef = knightEval[i, j];
+                    if (map[i, j] == 5)
+                        coef = rookEvalWhite[i, j];
+                    if (map[i, j] == 6)
+                        coef = pawnEvalWhite[i, j];
+                    if (map[i, j] == 7)
+                        coef = kingEvalBlack[i, j];
+                    if (map[i, j] == 8)
+                        coef = evalQueen[i, j];
+                    if (map[i, j] == 9)
+                        coef = bishopEvalBlack[i, j];
+                    if (map[i, j] == 10)
+                        coef = knightEval[i, j];
+                    if (map[i, j] == 11)
+                        coef = rookEvalBlack[i, j];
+                    if (map[i, j] == 12)
+                        coef = pawnEvalBlack[i, j];
+
                     if (boardRules.TryGetValue(map[i, j], out int val))
-                        BoardRate += val;
+                        BoardRate += val + coef;
                 }
             }
             return BoardRate;
@@ -851,12 +880,23 @@ namespace Chess
                 { 0,  0,  0,  0,  0,  0,  0,  0  }
             };
         }
-
+        private static double[,] reverseArray(double[,] Array)
+        {
+            double[,] doubles = new double[8, 8];
+            for (int i = 0; i < Array.GetLength(0); i++)
+            {
+                for (int j = 0; j < Array.GetLength(1); j++)
+                {
+                    doubles[i, j] = -Array[i, j];
+                }
+            }
+            return doubles;
+        }
         // На будующее
-        private double[,] pawnEvalWhite =
+        private static double[,] pawnEvalWhite =
         {
             { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
-            { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0},
+            { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5},
             {1.0, 1.0, 2.0, 3.0, 3.0, 2.0, 1.0, 1.0},
             { 0.5, 0.5, 1.0, 2.5, 2.5, 1.0, 0.5, 0.5},
             { 0.0, 0.0, 0.0, 2.0, 2.0, 0.0, 0.0, 0.0},
@@ -865,20 +905,20 @@ namespace Chess
             { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
         };
 
-        //private double[,] pawnEvalBlack = reverseArray(pawnEvalWhite);
+        private static double[,] pawnEvalBlack = reverseArray(pawnEvalWhite);
 
-        private double[,] knightEval ={
+        private static double[,] knightEval ={
             {-5.0, -4.0, -3.0, -3.0, -3.0, -3.0, -4.0, -5.0},
-            {-4.0, -2.0, 0.0, 0.0, 0.0, 0.0, -2.0, -4.0},
-            {-3.0, 0.0, 1.0, 1.5, 1.5, 1.0, 0.0, -3.0},
-            {-3.0, 0.5, 1.5, 2.0, 2.0, 1.5, 0.5, -3.0},
-            {-3.0, 0.0, 1.5, 2.0, 2.0, 1.5, 0.0, -3.0},
-            {-3.0, 0.5, 1.0, 1.5, 1.5, 1.0, 0.5, -3.0},
-            {-4.0, -2.0, 0.0, 0.5, 0.5, 0.0, -2.0, -4.0},
+            {-4.0, -2.0,  0.0,  0.0,  0.0,  0.0, -2.0, -4.0},
+            {-3.0,  0.0,  1.0,  1.5,  1.5,  1.0,  0.0, -3.0},
+            {-3.0,  0.5,  1.5,  2.0,  2.0,  1.5,  0.5, -3.0},
+            {-3.0,  0.0,  1.5,  2.0,  2.0,  1.5,  0.0, -3.0},
+            {-3.0,  0.5,  1.0,  1.5,  1.5,  1.0,  0.5, -3.0},
+            {-4.0, -2.0,  0.0,  0.5,  0.5,  0.0, -2.0, -4.0},
             {-5.0, -4.0, -3.0, -3.0, -3.0, -3.0, -4.0, -5.0 }
         };
 
-        private double[,] bishopEvalWhite = {
+        private static double[,] bishopEvalWhite = {
             {-2.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -2.0},
             {-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0},
             {-1.0, 0.0, 0.5, 1.0, 1.0, 0.5, 0.0, -1.0},
@@ -889,9 +929,9 @@ namespace Chess
             {-2.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -2.0}
         };
 
-        //private double[,] bishopEvalBlack = reverseArray(bishopEvalWhite);
+        private static double[,] bishopEvalBlack = reverseArray(bishopEvalWhite);
 
-        private double[,] rookEvalWhite = {
+        private static double[,] rookEvalWhite = {
             {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
             {0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5},
             {-0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.5},
@@ -902,9 +942,9 @@ namespace Chess
             {0.0, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0}
         };
 
-        //private double[,] rookEvalBlack = reverseArray(rookEvalWhite);
+        private static double[,] rookEvalBlack = reverseArray(rookEvalWhite);
 
-        private double[,] evalQueen = {
+        private static double[,] evalQueen = {
             {-2.0, -1.0, -1.0, -0.5, -0.5, -1.0, -1.0, -2.0},
             {-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0},
             {-1.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.0, -1.0},
@@ -915,17 +955,18 @@ namespace Chess
             {-2.0, -1.0, -1.0, -0.5, -0.5, -1.0, -1.0, -2.0}
         };
 
-        private double[,] kingEvalWhite = {
+        private static double[,] kingEvalWhite = {
             {-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0},
             {-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0},
             {-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0},
             {-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0},
             {-2.0, -3.0, -3.0, -4.0, -4.0, -3.0, -3.0, -2.0},
             {-1.0, -2.0, -2.0, -2.0, -2.0, -2.0, -2.0, -1.0},
-            {2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0},
-            {2.0, 3.0, 1.0, 0.0, 0.0, 1.0, 3.0, 2.0}
+            {2.0,  2.0,  0.0,  0.0,  0.0,  0.0,  2.0,  2.0},
+            {2.0,  3.0,  1.0,  0.0,  0.0,  1.0,  3.0,  2.0}
         };
 
+        private static double[,] kingEvalBlack = reverseArray(kingEvalWhite);
         // Дальше какя-то логика с кнопками
         private void OnAndFillAttackButtons(int x, int y)
         {
