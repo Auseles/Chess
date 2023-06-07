@@ -345,6 +345,7 @@ namespace Chess
         private void PawnRules(int x, int y, bool side, int depth)
         {
             int mod = side ? 1 : -1;
+            int mod2 = 0;
             //Вверх
             if (x + mod < 8 && x + mod > -1)
             {
@@ -371,13 +372,20 @@ namespace Chess
                 }
             }
             if (mod > 0)
+            {
+                mod2 = mod;
                 mod++;
+
+            }
             else
+            {
+                mod2 = mod;
                 mod--;
+            }
             //Первых ход пешки
             if (((x == 1 && mod > 0) || (x == 6 && mod < 0)) && IntMap[x + mod, y] == 0)
             {
-                if (IntMap[x + mod, y] == 0)
+                if (IntMap[x + mod, y] == 0 && IntMap[x + mod2, y] == 0)
                 {
                     OnAndFillButtons(x + mod, y);
                     AddMove(x, y, x + mod, y, depth);
