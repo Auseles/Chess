@@ -316,7 +316,7 @@
             <Image Grid.Column="7" Grid.Row="1" x:Name="Bot_S16_Img" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Visible"/>
         </Grid>
         <!--Съеденные фигуры игроком-->
-        <Grid Grid.Column="9" Grid.Row="6">
+        <Grid Grid.Column="9" Grid.Row="6" Name="PlayerGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="*"/>
