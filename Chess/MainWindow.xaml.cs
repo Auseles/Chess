@@ -235,14 +235,14 @@ namespace Chess
                     break;
             }
         }
-        private void Surrender_Click(object sender, RoutedEventArgs e)
+        private void Restart_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show("Вы уверены что хотите сдаться?", "Сдаться", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            if (MessageBox.Show("Вы уверены что хотите перезапустить игру?", "Перезапуск игры", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 List<Button> listButtons = new List<Button>();
                 GetLogicalChildCollection(this, listButtons);
                 //кнопка смены стороны
-                listButtons[64].IsEnabled = true;
+                listButtons[65].IsEnabled = true;
                 ComplexityComboBox.IsEnabled = true;
                 SetStartingLocation();
                 RedriwingFigure();
@@ -468,7 +468,7 @@ namespace Chess
             {
                 List<Button> listButtons = new List<Button>();
                 GetLogicalChildCollection(this, listButtons);
-                listButtons[64].IsEnabled = true;
+                listButtons[65].IsEnabled = true;
                 ComplexityComboBox.IsEnabled = true;
                 SetStartingLocation();
                 RedriwingFigure();
@@ -1203,13 +1203,14 @@ namespace Chess
         {
             List<Button> listButtons = new List<Button>();
             GetLogicalChildCollection(this, listButtons);
-            listButtons[64].IsEnabled = false;
+            listButtons[65].IsEnabled = false;
             if (!ComplexityFlag)
             {
                 SetComplexity();
                 ComplexityFlag = true;
             }
             ComplexityComboBox.IsEnabled = false;
+            Restart.Visibility = Visibility.Visible;
             listButtons[ButtonNumMap[x, y]].IsEnabled = true;
             listButtons[ButtonNumMap[x, y]].Opacity = 0.5;
             listButtons[ButtonNumMap[x, y]].Background = new SolidColorBrush(Colors.Green);
