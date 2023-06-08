@@ -29,8 +29,8 @@ namespace Chess
         public int MateCheck = 0;
         public bool ChoosingSide = true; //false - чёрные  true - белые
         public int cnt = 0;
-        public int buttonNum1;
-        public int buttonNum2;
+        public int LastMove1;
+        public int LastMove2;
         public int WhiteKingMoveCnt = 0;
         public int BlackKingMoveCnt = 0;
         public int WhiteRook1MoveCnt = 0;
@@ -40,6 +40,8 @@ namespace Chess
         public int Complexity = 1;
         public bool ComplexityFlag = false;
         public bool SoundFlag = true;
+        public int EatFlag = 50;
+        public int PawnMoveFlag = 50;
         private Dictionary<int, int> boardRules = new Dictionary<int, int>();
         private Dictionary<int, Action<int, int, bool, int>> chessRules = new Dictionary<int, Action<int, int, bool, int>>();
         private Dictionary<int, List<Move>> movies = new Dictionary<int, List<Move>>();
@@ -54,7 +56,7 @@ namespace Chess
         // Пешка Игрока    - 6       Пешка ИИ    - 12
 
         public MainWindow()
-        {            
+        {
             InitializeComponent();
             SetStartingLocation();
             RedriwingFigure();
@@ -97,18 +99,20 @@ namespace Chess
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            MoveCntFlag += 1;
             var button = (UIElement)sender;
             var col = Grid.GetColumn(button) - 1;
             var row = 8 - Grid.GetRow(button);
-            CheckMove(row, col, ButtonNumMap[row, col], 0);
+            if (IntMap[row,col] !=0 && IntMap[row,col] < 7 || MoveCntFlag == 1)
+            {
+                MoveCntFlag += 1;
+                CheckMove(row, col, ButtonNumMap[row, col], 0);
+            }
         }
 
         private void SetStartingLocation()
         {
             ComplexityFlag = false;
-            turn = 0;
-            OnOffButtons(true, 0);
+            turn = 0;            
             MoveMap = getClearArray();
             IntMap = new int[8, 8]
             {
@@ -159,6 +163,7 @@ namespace Chess
             BlackKingMoveCnt = 0;
             BlackRook1MoveCnt = 0;
             BlackRook2MoveCnt = 0;
+            OnOffButtons(true, 0);
         }
         private void SetComplexity()
         {
@@ -190,7 +195,7 @@ namespace Chess
             RedriwingFigure();
             turn++;
             CheckTurn();
-            OnOffButtons(true,0);
+            OnOffButtons(true, 0);
         }
 
         private void RedriwingFigure()
@@ -216,6 +221,7 @@ namespace Chess
         }
         private void EatAdd(string figure, bool isAPlayer)
         {
+            EatFlag = 50;
             bool flag = false;
             var map = PlayerEatArray;
             if (!isAPlayer)
@@ -243,6 +249,7 @@ namespace Chess
                 GetLogicalChildCollection(this, listButtons);
                 //кнопка смены стороны
                 listButtons[65].IsEnabled = true;
+                Restart.Visibility = Visibility.Hidden;
                 ComplexityComboBox.IsEnabled = true;
                 SetStartingLocation();
                 RedriwingFigure();
@@ -314,9 +321,23 @@ namespace Chess
             IntMap[x1, y1] = 0;
             if (StrMap[x2, y2] != "")
                 EatAdd(StrMap[x2, y2], true);
+            else
+                EatFlag--;
             StrMap[x2, y2] = ImgBuf;
             IntMap[x2, y2] = IntBuff;
-
+            if (IntMap[x2, y2] == 6)
+                PawnMoveFlag = 50;
+            else
+                PawnMoveFlag--;
+            //Превращение пешки игрока
+            if (IntMap[x2, y2] == 6 && x2 == 7)
+            {
+                IntMap[x2, y2] = 2;
+                if (ChoosingSide)
+                    StrMap[x2, y2] = "Images/WhiteQueen.png";
+                else
+                    StrMap[x2, y2] = "Images/BlackQueen.png";
+            }
             //Выяснение ходил ли король игрока
             if (IntMap[x2, y2] == 1)
             {
@@ -379,6 +400,12 @@ namespace Chess
                 //Добавление съеденых фигур в список
                 if (StrMap[MaxRate.Item3, MaxRate.Item4] != "")
                     EatAdd(StrMap[MaxRate.Item3, MaxRate.Item4], false);
+                else
+                    EatFlag--;
+                if (IntMap[MaxRate.Item1, MaxRate.Item2] == 12)
+                    PawnMoveFlag = 50;
+                else
+                    PawnMoveFlag--;
                 //Ходил ли король ИИ
                 if (IntMap[MaxRate.Item1, MaxRate.Item2] == 7)
                     BlackKingMoveCnt++;
@@ -392,7 +419,7 @@ namespace Chess
                 {
                     BlackRook2MoveCnt++;
                     int intbuff = IntMap[7, 7];
-                    string strbuff = StrMap[7,7];
+                    string strbuff = StrMap[7, 7];
                     IntMap[7, 7] = 0;
                     StrMap[7, 7] = "";
                     IntMap[7, 5] = intbuff;
@@ -413,10 +440,19 @@ namespace Chess
                 StrMap[MaxRate.Item3, MaxRate.Item4] = StrMap[MaxRate.Item1, MaxRate.Item2];
                 IntMap[MaxRate.Item1, MaxRate.Item2] = 0;
                 StrMap[MaxRate.Item1, MaxRate.Item2] = "";
+                //Превращение пешки ИИ
+                if (IntMap[MaxRate.Item3, MaxRate.Item4] == 12 && MaxRate.Item3 == 0)
+                {
+                    IntMap[MaxRate.Item3, MaxRate.Item4] = 8;
+                    if (!ChoosingSide)
+                        StrMap[MaxRate.Item3, MaxRate.Item4] = "Images/WhiteQueen.png";
+                    else
+                        StrMap[MaxRate.Item3, MaxRate.Item4] = "Images/BlackQueen.png";
+                }
                 List<Button> listButtons = new List<Button>();
                 GetLogicalChildCollection(this, listButtons);
-                buttonNum1 = ButtonNumMap[MaxRate.Item1, MaxRate.Item2];
-                buttonNum2 = ButtonNumMap[MaxRate.Item3, MaxRate.Item4];
+                LastMove1 = ButtonNumMap[MaxRate.Item1, MaxRate.Item2];
+                LastMove2 = ButtonNumMap[MaxRate.Item3, MaxRate.Item4];
                 RedriwingFigure();
                 CheckEndGame();
                 if (SoundFlag)
@@ -462,6 +498,11 @@ namespace Chess
             if (!WhiteKing)
             {
                 MessageBox.Show("Вы проиграли");
+                End = true;
+            }
+            if (PawnMoveFlag <= 0 && EatFlag <= 0)
+            {
+                MessageBox.Show("Ничья");
                 End = true;
             }
             if (End == true)
@@ -1221,7 +1262,7 @@ namespace Chess
             List<Button> listButtons = new List<Button>();
             GetLogicalChildCollection(this, listButtons);
             for (int i = 0; i < 64; i++)
-            {
+            {                  
                 listButtons[i].IsEnabled = flag;
                 listButtons[i].Opacity = 0;
                 if (flag == false)
@@ -1232,12 +1273,12 @@ namespace Chess
                 }
                 if (turn > 1)
                 {
-                    listButtons[buttonNum1].IsEnabled = true;
-                    listButtons[buttonNum1].Opacity = 0.5;
-                    listButtons[buttonNum1].Background = new SolidColorBrush(Colors.DarkSlateGray);
-                    listButtons[buttonNum2].IsEnabled = true;
-                    listButtons[buttonNum2].Opacity = 0.5;
-                    listButtons[buttonNum2].Background = new SolidColorBrush(Colors.DarkSlateGray);
+                    listButtons[LastMove1].IsEnabled = true;
+                    listButtons[LastMove1].Opacity = 0.5;
+                    listButtons[LastMove1].Background = new SolidColorBrush(Colors.DarkSlateGray);
+                    listButtons[LastMove2].IsEnabled = true;
+                    listButtons[LastMove2].Opacity = 0.5;
+                    listButtons[LastMove2].Background = new SolidColorBrush(Colors.DarkSlateGray);
                 }
             }
         }
