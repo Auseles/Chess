@@ -37,6 +37,9 @@ namespace Chess
         public int WhiteRook2MoveCnt = 0;
         public int BlackRook1MoveCnt = 0;
         public int BlackRook2MoveCnt = 0;
+        public int Complexity = 1;
+        public bool ComplexityFlag = false;
+        public bool SoundFlag = true;
         private Dictionary<int, int> boardRules = new Dictionary<int, int>();
         private Dictionary<int, Action<int, int, bool, int>> chessRules = new Dictionary<int, Action<int, int, bool, int>>();
         private Dictionary<int, List<Move>> movies = new Dictionary<int, List<Move>>();
@@ -51,7 +54,7 @@ namespace Chess
         // Пешка Игрока    - 6       Пешка ИИ    - 12
 
         public MainWindow()
-        {
+        {            
             InitializeComponent();
             SetStartingLocation();
             RedriwingFigure();
@@ -98,12 +101,12 @@ namespace Chess
             var button = (UIElement)sender;
             var col = Grid.GetColumn(button) - 1;
             var row = 8 - Grid.GetRow(button);
-            //MessageBox.Show($"col {col} row {row} 123 {ButtonNumMap[row, col]}");
             CheckMove(row, col, ButtonNumMap[row, col], 0);
         }
 
         private void SetStartingLocation()
         {
+            ComplexityFlag = false;
             turn = 0;
             OnOffButtons(true, 0);
             MoveMap = getClearArray();
@@ -157,7 +160,15 @@ namespace Chess
             BlackRook1MoveCnt = 0;
             BlackRook2MoveCnt = 0;
         }
-
+        private void SetComplexity()
+        {
+            if (ComplexityComboBox.SelectedIndex == 0)
+                Complexity = 0;
+            if (ComplexityComboBox.SelectedIndex == 1)
+                Complexity = 1;
+            if (ComplexityComboBox.SelectedIndex == 2)
+                Complexity = 2;
+        }
         private void ChengingSide_Click(object sender, RoutedEventArgs e)
         {
             ChoosingSide = !ChoosingSide;
@@ -232,6 +243,7 @@ namespace Chess
                 GetLogicalChildCollection(this, listButtons);
                 //кнопка смены стороны
                 listButtons[64].IsEnabled = true;
+                ComplexityComboBox.IsEnabled = true;
                 SetStartingLocation();
                 RedriwingFigure();
             }
@@ -346,6 +358,7 @@ namespace Chess
                 turn++;
                 CheckTurn();
                 CheckEndGame();
+                MuteButton.IsEnabled = true;
             }
             else
             {
@@ -355,9 +368,14 @@ namespace Chess
                     item.Clear();
                 }
                 cnt = 0;
-                var watch = Stopwatch.StartNew();
-                var MaxRate = SuperMiniMax(2, false);
-                watch.Stop();
+                int depth = 0;
+                if (Complexity == 0)
+                    depth = 1;
+                if (Complexity == 1)
+                    depth = 2;
+                if (Complexity == 2)
+                    depth = 4;
+                var MaxRate = SuperMiniMax(depth, false);
                 //Добавление съеденых фигур в список
                 if (StrMap[MaxRate.Item3, MaxRate.Item4] != "")
                     EatAdd(StrMap[MaxRate.Item3, MaxRate.Item4], false);
@@ -401,10 +419,14 @@ namespace Chess
                 buttonNum2 = ButtonNumMap[MaxRate.Item3, MaxRate.Item4];
                 RedriwingFigure();
                 CheckEndGame();
-                System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                System.IO.Stream res = assembly.GetManifestResourceStream(@"Chess.1.wav");
-                SoundPlayer simpleSound = new SoundPlayer(res);
-                simpleSound.Play();
+                if (SoundFlag)
+                {
+                    System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                    System.IO.Stream res = assembly.GetManifestResourceStream(@"Chess.1.wav");
+                    SoundPlayer simpleSound = new SoundPlayer(res);
+                    simpleSound.Play();
+                }
+                MuteButton.IsEnabled = true;
             }
         }
 
@@ -447,6 +469,7 @@ namespace Chess
                 List<Button> listButtons = new List<Button>();
                 GetLogicalChildCollection(this, listButtons);
                 listButtons[64].IsEnabled = true;
+                ComplexityComboBox.IsEnabled = true;
                 SetStartingLocation();
                 RedriwingFigure();
             }
@@ -982,8 +1005,6 @@ namespace Chess
                     if (movies.TryGetValue(depth - 1, out List<Move> nextLevelMove))
                         nextLevelMove.Clear();
                     minEval = Math.Min(minEval, Minimax(depth - 1, !isAPlayer, alpha, beta).Item5);
-                    if (minEval != 0 && depth == 4)
-                        Console.WriteLine($"minEval {minEval} alpha {alpha} beta {beta} depth {depth} x1 {move.X1} y1 {move.Y1} x2 {move.X2} y2 {move.Y2}");
                     IntMap[move.X1, move.Y1] = IntBuff1;
                     IntMap[move.X2, move.Y2] = IntBuff2;
                     beta = Math.Min(beta, minEval);
@@ -1183,6 +1204,12 @@ namespace Chess
             List<Button> listButtons = new List<Button>();
             GetLogicalChildCollection(this, listButtons);
             listButtons[64].IsEnabled = false;
+            if (!ComplexityFlag)
+            {
+                SetComplexity();
+                ComplexityFlag = true;
+            }
+            ComplexityComboBox.IsEnabled = false;
             listButtons[ButtonNumMap[x, y]].IsEnabled = true;
             listButtons[ButtonNumMap[x, y]].Opacity = 0.5;
             listButtons[ButtonNumMap[x, y]].Background = new SolidColorBrush(Colors.Green);
@@ -1229,6 +1256,15 @@ namespace Chess
                     GetLogicalChildCollection(depChild, logicalCollection);
                 }
             }
+        }
+
+        private void MuteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SoundFlag)
+                SoundImage.Source = new BitmapImage(new Uri("Images/no-sound.png", UriKind.Relative));
+            else
+                SoundImage.Source = new BitmapImage(new Uri("Images/sounds.png", UriKind.Relative));
+            SoundFlag = !SoundFlag;
         }
     }
 
