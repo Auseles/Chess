@@ -283,7 +283,7 @@
             <Button Content="Сменить сторону" FontSize="16" Name="ChengingSide" Click="ChengingSide_Click" Margin="25,0,25,0"/>
         </Grid>
         <Grid Grid.Column="9" Grid.Row="8">
-            <Button Content="Сдаться" FontSize="16" Name="Surrender" Click="Surrender_Click" Margin="25,0,25,0"/>
+            <Button Content="Перезапустить игру" FontSize="16" Name="Restart" Click="Restart_Click" Margin="25,0,25,0" Visibility="Hidden"/>
         </Grid>
         <Grid Grid.Column="9" Grid.Row="2">
             <Grid.ColumnDefinitions>
