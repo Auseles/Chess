@@ -283,7 +283,7 @@
         </Grid>
         
         <!--Съеденные фигуры ботом-->
-        <Grid Grid.Column="9" Grid.Row="3">
+        <Grid Grid.Column="9" Grid.Row="3" Name="BotGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="*"/>

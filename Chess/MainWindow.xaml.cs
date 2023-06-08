@@ -22,6 +22,7 @@ namespace Chess
         public int[,] ButtonNumMap;
         public string[,] StrMap;
         public string[,] PlayerEatArray;
+        public string[,] BotEatArray;
         public double turn = 0;
         public int MoveCntFlag = 0;
         public int RateMoveCnt = 0;
@@ -144,6 +145,17 @@ namespace Chess
                 {"","","","","","","","" },
                 {"","","","","","","","" }
             };
+            BotEatArray = new string[2, 8]
+            {
+                {"","","","","","","","" },
+                {"","","","","","","","" }
+            };
+            WhiteKingMoveCnt = 0;
+            WhiteRook1MoveCnt = 0;
+            WhiteRook2MoveCnt = 0;
+            BlackKingMoveCnt = 0;
+            BlackRook1MoveCnt = 0;
+            BlackRook2MoveCnt = 0;
         }
 
         private void ChengingSide_Click(object sender, RoutedEventArgs e)
@@ -165,6 +177,9 @@ namespace Chess
                 }
             }
             RedriwingFigure();
+            turn++;
+            CheckTurn();
+            OnOffButtons(true,0);
         }
 
         private void RedriwingFigure()
@@ -178,25 +193,29 @@ namespace Chess
                     GetChildren<Image>(MainGrid, i + 1, j + 1).Source = new BitmapImage(new Uri(StrMap[row, j], UriKind.Relative));
                 }
             }
-            //Очистка взятых фигур
+            //Отрисовка взятых фигур
             for (int i = 0; i < 2; i++)
             {
                 for (int j = 0; j < 8; j++)
                 {
                     GetChildren<Image>(PlayerGrid, i, j).Source = new BitmapImage(new Uri(PlayerEatArray[i, j], UriKind.Relative));
+                    GetChildren<Image>(BotGrid, i, j).Source = new BitmapImage(new Uri(BotEatArray[i, j], UriKind.Relative));
                 }
             }
-                }
-        private void PlayerEatAdd(string figure)
+        }
+        private void EatAdd(string figure, bool isAPlayer)
         {
             bool flag = false;
+            var map = PlayerEatArray;
+            if (!isAPlayer)
+                map = BotEatArray;
             for (int i = 0; i < 2; i++)
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    if (PlayerEatArray[i, j] == "")
+                    if (map[i, j] == "")
                     {
-                        PlayerEatArray[i, j] = figure;                       
+                        map[i, j] = figure;
                         flag = true;
                         break;
                     }
@@ -282,7 +301,7 @@ namespace Chess
             StrMap[x1, y1] = "";
             IntMap[x1, y1] = 0;
             if (StrMap[x2, y2] != "")
-                PlayerEatAdd(StrMap[x2, y2]);
+                EatAdd(StrMap[x2, y2], true);
             StrMap[x2, y2] = ImgBuf;
             IntMap[x2, y2] = IntBuff;
 
@@ -293,6 +312,7 @@ namespace Chess
                 //Короткая рокировка
                 if (x1 == 0 && y1 == 4 && x2 == 0 && y2 == 6)
                 {
+                    WhiteRook2MoveCnt++;
                     ImgBuf = StrMap[0, 7];
                     IntBuff = IntMap[0, 7];
                     StrMap[0, 7] = "";
@@ -303,6 +323,7 @@ namespace Chess
                 //Длинная рокировка
                 if (x1 == 0 && y1 == 4 && x2 == 0 && y2 == 2)
                 {
+                    WhiteRook1MoveCnt++;
                     ImgBuf = StrMap[0, 0];
                     IntBuff = IntMap[0, 0];
                     StrMap[0, 0] = "";
@@ -322,7 +343,6 @@ namespace Chess
         {
             if (turn % 2 == 0)
             {
-                //MessageBox.Show("igrok hod");
                 turn++;
                 CheckTurn();
                 CheckEndGame();
@@ -338,7 +358,39 @@ namespace Chess
                 var watch = Stopwatch.StartNew();
                 var MaxRate = SuperMiniMax(2, false);
                 watch.Stop();
-                //MessageBox.Show("Обработано ходов:" + cnt.ToString() + " Время выполнения " + watch.Elapsed + " maxvalue " + MaxRate);
+                //Добавление съеденых фигур в список
+                if (StrMap[MaxRate.Item3, MaxRate.Item4] != "")
+                    EatAdd(StrMap[MaxRate.Item3, MaxRate.Item4], false);
+                //Ходил ли король ИИ
+                if (IntMap[MaxRate.Item1, MaxRate.Item2] == 7)
+                    BlackKingMoveCnt++;
+                //Ходили ли ладьи ИИ
+                if (MaxRate.Item1 == 7 && MaxRate.Item2 == 0 && IntMap[MaxRate.Item1, MaxRate.Item2] == 11)
+                    BlackRook1MoveCnt++;
+                if (MaxRate.Item1 == 7 && MaxRate.Item2 == 7 && IntMap[MaxRate.Item1, MaxRate.Item2] == 11)
+                    BlackRook2MoveCnt++;
+                //Короткая рокировка
+                if (MaxRate.Item1 == 7 && MaxRate.Item2 == 4 && MaxRate.Item3 == 7 && MaxRate.Item4 == 6)
+                {
+                    BlackRook2MoveCnt++;
+                    int intbuff = IntMap[7, 7];
+                    string strbuff = StrMap[7,7];
+                    IntMap[7, 7] = 0;
+                    StrMap[7, 7] = "";
+                    IntMap[7, 5] = intbuff;
+                    StrMap[7, 5] = strbuff;
+                }
+                //Длинная рокировка
+                if (MaxRate.Item1 == 7 && MaxRate.Item2 == 4 && MaxRate.Item3 == 7 && MaxRate.Item4 == 2)
+                {
+                    BlackRook1MoveCnt++;
+                    int intbuff = IntMap[7, 0];
+                    string strbuff = StrMap[7, 0];
+                    IntMap[7, 0] = 0;
+                    StrMap[7, 0] = "";
+                    IntMap[7, 3] = intbuff;
+                    StrMap[7, 3] = strbuff;
+                }
                 IntMap[MaxRate.Item3, MaxRate.Item4] = IntMap[MaxRate.Item1, MaxRate.Item2];
                 StrMap[MaxRate.Item3, MaxRate.Item4] = StrMap[MaxRate.Item1, MaxRate.Item2];
                 IntMap[MaxRate.Item1, MaxRate.Item2] = 0;
@@ -759,7 +811,7 @@ namespace Chess
                     }
                 }
             }
-            //Рокировка
+            //Рокировка игрока
             if (WhiteKingMoveCnt == 0 && side)
             {
                 if (WhiteRook2MoveCnt == 0)
@@ -776,6 +828,7 @@ namespace Chess
                     if (flag)
                     {
                         OnAndFillButtons(x, y + 2);
+                        AddMove(x, y, x, y + 2, depth);
                     }
                 }
                 if (WhiteRook1MoveCnt == 0)
@@ -792,6 +845,44 @@ namespace Chess
                     if (flag)
                     {
                         OnAndFillButtons(x, y - 2);
+                        AddMove(x, y, x, y - 2, depth);
+                    }
+                }
+            }
+            if (BlackKingMoveCnt == 0 && !side)
+            {
+                if (BlackRook2MoveCnt == 0)
+                {
+                    bool flag = true;
+                    for (int i = y + 1; i < 8; i++)
+                    {
+                        if (IntMap[x, i] != 0 && IntMap[x, i] != 11)
+                        {
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if (flag)
+                    {
+                        OnAndFillButtons(x, y + 2);
+                        AddMove(x, y, x, y + 2, depth);
+                    }
+                }
+                if (BlackRook1MoveCnt == 0)
+                {
+                    bool flag = true;
+                    for (int i = y - 1; i > -1; i--)
+                    {
+                        if (IntMap[x, i] != 0 && IntMap[x, i] != 11)
+                        {
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if (flag)
+                    {
+                        OnAndFillButtons(x, y - 2);
+                        AddMove(x, y, x, y - 2, depth);
                     }
                 }
             }
@@ -1002,7 +1093,7 @@ namespace Chess
             }
             return doubles;
         }
-        // На будующее
+        //Массивы оценок расположения фигур
         private static double[,] pawnEvalWhite =
         {
             { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
