@@ -113,5 +113,9 @@
   <ItemGroup>
     <EmbeddedResource Include="1.wav" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\no-sound.png" />
+    <Resource Include="Images\sounds.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -275,14 +275,30 @@
         <Button x:Name="H8_Button" Grid.Column="8" Grid.Row="1" Click="Button_Click" Opacity="0"/>
         
         <!--Правая панель настроек-->
+        <Grid Grid.Column="9" Grid.Row="0" Name="SoundGrid">
+            <Image x:Name="SoundImage" Source="Images/sounds.png" Width="30" Height="30"/>
+            <Button x:Name="MuteButton" Width="30" Height="30" Click="MuteButton_Click" Opacity="0"/>
+        </Grid>
         <Grid Grid.Column="9" Grid.Row="1">
             <Button Content="Сменить сторону" FontSize="16" Name="ChengingSide" Click="ChengingSide_Click" Margin="25,0,25,0"/>
         </Grid>
         <Grid Grid.Column="9" Grid.Row="8">
             <Button Content="Сдаться" FontSize="16" Name="Surrender" Click="Surrender_Click" Margin="25,0,25,0"/>
         </Grid>
-        
-        <!--Съеденные фигуры ботом-->
+        <Grid Grid.Column="9" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" Content="Сложность" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" Name="ComplexityComboBox" Width="100" Height="25" SelectedIndex="1">
+                <ComboBoxItem Content="Легко"/>
+                <ComboBoxItem Content="Средне"/>
+                <ComboBoxItem Content="Сложно"/>
+            </ComboBox>
+        </Grid>
+
+            <!--Съеденные фигуры ботом-->
         <Grid Grid.Column="9" Grid.Row="3" Name="BotGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
