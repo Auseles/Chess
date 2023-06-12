@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Media;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -13,32 +11,32 @@ using System.Windows.Media.Imaging;
 namespace Chess
 {
     /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
+    /// Логика взаимодействия для ChessWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class ChessWindow : Window
     {
-        public int[,] IntMap;
-        public int[,] MoveMap;
-        public int[,] ButtonNumMap;
-        public string[,] StrMap;
-        public string[,] PlayerEatArray;
-        public string[,] BotEatArray;
-        public double turn = 0;
-        public int ClickCntFlag = 0;
-        public bool ChoosingSide = true; //false - чёрные  true - белые
-        public int LastMove1;
-        public int LastMove2;
-        public int WhiteKingMoveCnt = 0;
-        public int BlackKingMoveCnt = 0;
-        public int WhiteLeftRookMoveCnt = 0;
-        public int WhiteRightRookMoveCnt = 0;
-        public int BlackLeftRookMoveCnt = 0;
-        public int BlackRightRookMoveCnt = 0;
-        public int Complexity = 1;
-        public bool ComplexityFlag = false;
-        public bool SoundFlag = true;
-        public int NoEatMoveCnt = 0;
-        public int NoPawnMoveCnt = 0;
+        private int[,] IntMap;
+        private int[,] MoveMap;
+        private int[,] ButtonNumMap;
+        private string[,] StrMap;
+        private string[,] PlayerEatArray;
+        private string[,] BotEatArray;
+        private double turn = 0;
+        private int ClickCntFlag = 0;
+        private bool ChoosingSide = true; //false - чёрные  true - белые
+        private int LastMove1;
+        private int LastMove2;
+        private int WhiteKingMoveCnt = 0;
+        private int BlackKingMoveCnt = 0;
+        private int WhiteLeftRookMoveCnt = 0;
+        private int WhiteRightRookMoveCnt = 0;
+        private int BlackLeftRookMoveCnt = 0;
+        private int BlackRightRookMoveCnt = 0;
+        private int Complexity = 1;
+        private bool ComplexityFlag = false;
+        private bool SoundFlag = true;
+        private int NoEatMoveCnt = 0;
+        private int NoPawnMoveCnt = 0;
         private Dictionary<int, int> boardRules = new Dictionary<int, int>();
         private Dictionary<int, Action<int, int, bool, int>> chessRules = new Dictionary<int, Action<int, int, bool, int>>();
         private Dictionary<int, List<Move>> movies = new Dictionary<int, List<Move>>();
@@ -52,7 +50,7 @@ namespace Chess
         // Ладья Игрока    - 5       Ладья ИИ    - 11
         // Пешка Игрока    - 6       Пешка ИИ    - 12
 
-        public MainWindow()
+        public ChessWindow()
         {
             InitializeComponent();
             SetStartingLocation();
@@ -90,8 +88,6 @@ namespace Chess
             movies.Add(2, new List<Move>());
             movies.Add(3, new List<Move>());
             movies.Add(4, new List<Move>());
-            movies.Add(5, new List<Move>());
-            movies.Add(6, new List<Move>());
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -99,7 +95,7 @@ namespace Chess
             var button = (UIElement)sender;
             var col = Grid.GetColumn(button) - 1;
             var row = 8 - Grid.GetRow(button);
-            if (IntMap[row,col] !=0 && IntMap[row,col] < 7 || ClickCntFlag == 1)
+            if (IntMap[row, col] != 0 && IntMap[row, col] < 7 || ClickCntFlag == 1)
             {
                 ClickCntFlag += 1;
                 CheckMove(row, col, ButtonNumMap[row, col], 0);
@@ -109,8 +105,8 @@ namespace Chess
         private void SetStartingLocation()
         {
             ComplexityFlag = false;
-            turn = 0;            
-            MoveMap = getClearArray();
+            turn = 0;
+            MoveMap = GetClearArray();
             IntMap = new int[8, 8]
             {
                 { 5,  4,  3,  2,  1,  3,  4,  5  },
@@ -162,6 +158,7 @@ namespace Chess
             BlackRightRookMoveCnt = 0;
             OnOffButtons(true, 0);
         }
+
         private void SetComplexity()
         {
             if (ComplexityComboBox.SelectedIndex == 0)
@@ -171,6 +168,7 @@ namespace Chess
             if (ComplexityComboBox.SelectedIndex == 2)
                 Complexity = 2;
         }
+        
         private void ChengingSide_Click(object sender, RoutedEventArgs e)
         {
             ChoosingSide = !ChoosingSide;
@@ -178,12 +176,9 @@ namespace Chess
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    int intbuff = IntMap[i, j];
                     string strbuff = StrMap[i, j];
                     StrMap[i, j] = StrMap[i + 7, j];
                     StrMap[i + 7, j] = strbuff;
-
-                    intbuff = IntMap[i + 1, j];
                     strbuff = StrMap[i + 1, j];
                     StrMap[i + 1, j] = StrMap[i + 6, j];
                     StrMap[i + 6, j] = strbuff;
@@ -194,28 +189,25 @@ namespace Chess
             CheckTurn();
             OnOffButtons(true, 0);
         }
-
+        
         private void RedriwingFigure()
         {
-            //Перерисовка положения фигур
+            //Перерисовка положения фигур и взятых фигур
             for (int i = 0; i < 8; i++)
             {
                 for (int j = 0; j < 8; j++)
                 {
                     var row = 7 - i;
                     GetChildren<Image>(MainGrid, i + 1, j + 1).Source = new BitmapImage(new Uri(StrMap[row, j], UriKind.Relative));
-                }
-            }
-            //Отрисовка взятых фигур
-            for (int i = 0; i < 2; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    GetChildren<Image>(PlayerGrid, i, j).Source = new BitmapImage(new Uri(PlayerEatArray[i, j], UriKind.Relative));
-                    GetChildren<Image>(BotGrid, i, j).Source = new BitmapImage(new Uri(BotEatArray[i, j], UriKind.Relative));
+                    if (i < 2)
+                    {
+                        GetChildren<Image>(PlayerGrid, i, j).Source = new BitmapImage(new Uri(PlayerEatArray[i, j], UriKind.Relative));
+                        GetChildren<Image>(BotGrid, i, j).Source = new BitmapImage(new Uri(BotEatArray[i, j], UriKind.Relative));
+                    }
                 }
             }
         }
+        
         private void EatAdd(string figure, bool isAPlayer)
         {
             NoEatMoveCnt = 0;
@@ -238,6 +230,7 @@ namespace Chess
                     break;
             }
         }
+        
         private void Restart_Click(object sender, RoutedEventArgs e)
         {
             if (MessageBox.Show("Вы уверены что хотите перезапустить игру?", "Перезапуск игры", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
@@ -252,13 +245,13 @@ namespace Chess
                 RedriwingFigure();
             }
         }
-
+        
         private void CheckMove(int x, int y, int num, int depth)
         {
             if (ClickCntFlag == 1)
             {
                 MoveMap[x, y] = 1;
-                CheckRules(x, y, num, true, depth);
+                CheckRules(x, y, num, depth);
             }
             else
             {
@@ -276,7 +269,7 @@ namespace Chess
                 }
                 if (ClickCnt == 1)
                 {
-                    MoveMap = getClearArray();
+                    MoveMap = GetClearArray();
                     ClickCntFlag = 0;
                     OnOffButtons(true, 65);
                 }
@@ -284,7 +277,7 @@ namespace Chess
                     MoveFigure();
             }
         }
-
+        
         private void MoveFigure()
         {
             OnOffButtons(true, 0);
@@ -364,11 +357,11 @@ namespace Chess
             }
             RedriwingFigure();
             ClickCntFlag = 0;
-            MoveMap = getClearArray();
+            MoveMap = GetClearArray();
             CheckTurn();
             OnOffButtons(true, 0);
         }
-
+        
         private void CheckTurn()
         {
             if (turn % 2 == 0)
@@ -391,8 +384,8 @@ namespace Chess
                 if (Complexity == 1)
                     depth = 2;
                 if (Complexity == 2)
-                    depth = 4;
-                var MaxRate = SuperMiniMax(depth, false);
+                    depth = 3;
+                var MaxRate = FirstStepMiniMax(depth, false);
                 //Добавление съеденых фигур в список
                 if (StrMap[MaxRate.Item3, MaxRate.Item4] != "")
                     EatAdd(StrMap[MaxRate.Item3, MaxRate.Item4], false);
@@ -461,7 +454,7 @@ namespace Chess
                 MuteButton.IsEnabled = true;
             }
         }
-
+        
         private void CheckEndGame()
         {
             int cnt = 0;
@@ -511,7 +504,8 @@ namespace Chess
                 RedriwingFigure();
             }
         }
-        private void CheckRules(int x, int y, int num, bool flag, int depth)
+        
+        private void CheckRules(int x, int y, int num, int depth)
         {
             List<Button> listButtons = new List<Button>();
             GetLogicalChildCollection(this, listButtons);
@@ -520,7 +514,7 @@ namespace Chess
             if (popedFunction != null)
                 popedFunction(x, y, IntMap[x, y] < 7, depth);
         }
-
+        
         private void PawnRules(int x, int y, bool side, int depth)
         {
             int mod = side ? 1 : -1;
@@ -571,9 +565,10 @@ namespace Chess
                 }
             }
         }
-
+        
         private void RookRules(int x, int y, bool side, int depth)
         {
+            //Вверх
             for (int i = x + 1; i < 8; i++)
             {
                 if (IntMap[i, y] == 0)
@@ -643,7 +638,7 @@ namespace Chess
                     break;
             }
         }
-
+        
         private void KnightRules(int x, int y, bool side, int depth)
         {
             //Вверх-вправо
@@ -759,7 +754,7 @@ namespace Chess
                 }
             }
         }
-
+        
         private void BishopRules(int x, int y, bool side, int depth)
         {
             //Вверх-вправо
@@ -843,13 +838,13 @@ namespace Chess
                 else { break; }
             }
         }
-
+        
         private void QueenRules(int x, int y, bool side, int depth)
         {
             RookRules(x, y, side, depth);
             BishopRules(x, y, side, depth);
         }
-
+        
         private void KingRules(int x, int y, bool side, int depth)
         {
             for (int i = x - 1; i <= x + 1; i++)
@@ -958,20 +953,21 @@ namespace Chess
                     {
                         if (IntMap[i, j] <= 6 && IntMap[i, j] > 0)
                         {
-                            CheckRules(i, j, 0, false, depth);
+                            CheckRules(i, j, 0, depth);
                         }
                     }
                     else
                     {
                         if (IntMap[i, j] >= 7)
                         {
-                            CheckRules(i, j, 0, false, depth);
+                            CheckRules(i, j, 0, depth);
                         }
                     }
                 }
             }
         }
-        private Tuple<int, int, int, int> SuperMiniMax(int depth, bool isAPlayer)
+        
+        private Tuple<int, int, int, int> FirstStepMiniMax(int depth, bool isAPlayer)
         {
             movies.TryGetValue(depth, out List<Move> moves);
             SearchAllMoves(isAPlayer, depth);
@@ -983,7 +979,7 @@ namespace Chess
                 int IntBuff2 = IntMap[move.X2, move.Y2];
                 IntMap[move.X2, move.Y2] = IntMap[move.X1, move.Y1];
                 IntMap[move.X1, move.Y1] = 0;
-                var value = Minimax(depth - 1, !isAPlayer, int.MinValue, int.MaxValue).Item5;
+                double value = Minimax(depth - 1, !isAPlayer, int.MinValue, int.MaxValue);
                 if (value >= maxEval)
                 {
                     maxEval = value;
@@ -998,15 +994,14 @@ namespace Chess
             return Tuple.Create(x1max, y1max, x2max, y2max);
         }
 
-        private Tuple<int, int, int, int, double> Minimax(int depth, bool isAPlayer, double alpha, double beta)
+        private double Minimax(int depth, bool isAPlayer, double alpha, double beta)
         {
             if (depth == 0)
-                return Tuple.Create(0, 0, 0, 0, RateBoard());
+                return RateBoard();
             movies.TryGetValue(depth, out List<Move> moves);
             SearchAllMoves(isAPlayer, depth);
             if (!isAPlayer)
             {
-                int x1max = 0, y1max = 0, x2max = 0, y2max = 0;
                 double maxEval = double.MinValue;
                 foreach (var move in moves)
                 {
@@ -1016,20 +1011,19 @@ namespace Chess
                     IntMap[move.X1, move.Y1] = 0;
                     if (movies.TryGetValue(depth - 1, out List<Move> nextLevelMove))
                         nextLevelMove.Clear();
-                    maxEval = Math.Max(maxEval, Minimax(depth - 1, !isAPlayer, alpha, beta).Item5);
+                    maxEval = Math.Max(maxEval, Minimax(depth - 1, !isAPlayer, alpha, beta));
                     IntMap[move.X1, move.Y1] = IntBuff1;
                     IntMap[move.X2, move.Y2] = IntBuff2;
                     alpha = Math.Max(alpha, maxEval);
                     if (beta <= alpha)
                     {
-                        return Tuple.Create(0, 0, 0, 0, maxEval);
+                        return maxEval;
                     }
                 }
-                return Tuple.Create(x1max, y1max, x2max, y2max, maxEval);
+                return maxEval;
             }
             else
             {
-                int x1max = 0, y1max = 0, x2max = 0, y2max = 0;
                 double minEval = int.MaxValue;
                 foreach (var move in moves)
                 {
@@ -1039,20 +1033,19 @@ namespace Chess
                     IntMap[move.X1, move.Y1] = 0;
                     if (movies.TryGetValue(depth - 1, out List<Move> nextLevelMove))
                         nextLevelMove.Clear();
-                    minEval = Math.Min(minEval, Minimax(depth - 1, !isAPlayer, alpha, beta).Item5);
+                    minEval = Math.Min(minEval, Minimax(depth - 1, !isAPlayer, alpha, beta));
                     IntMap[move.X1, move.Y1] = IntBuff1;
                     IntMap[move.X2, move.Y2] = IntBuff2;
                     beta = Math.Min(beta, minEval);
                     if (beta <= alpha)
                     {
-                        return Tuple.Create(0, 0, 0, 0, minEval);
+                        return minEval;
                     }
                 }
-                return Tuple.Create(x1max, y1max, x2max, y2max, minEval);
+                return minEval;
             }
         }
 
-        // Оценка доски
         private double RateBoard()
         {
             var map = IntMap;
@@ -1123,7 +1116,7 @@ namespace Chess
                 .FirstOrDefault();
         }
 
-        private int[,] getClearArray()
+        private int[,] GetClearArray()
         {
             return new int[8, 8]
             {
@@ -1137,7 +1130,8 @@ namespace Chess
                 { 0,  0,  0,  0,  0,  0,  0,  0  }
             };
         }
-        private static double[,] reverseArray(double[,] Array)
+        
+        private static double[,] ReverseArray(double[,] Array)
         {
             double[,] doubles = new double[8, 8];
             for (int i = 0; i < Array.GetLength(0); i++)
@@ -1149,6 +1143,7 @@ namespace Chess
             }
             return doubles;
         }
+        
         //Массивы оценок расположения фигур
         private static double[,] pawnEvalWhite =
         {
@@ -1162,7 +1157,7 @@ namespace Chess
             { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
         };
 
-        private static double[,] pawnEvalBlack = reverseArray(pawnEvalWhite);
+        private static double[,] pawnEvalBlack = ReverseArray(pawnEvalWhite);
 
         private static double[,] knightEval ={
             {-5.0, -4.0, -3.0, -3.0, -3.0, -3.0, -4.0, -5.0},
@@ -1186,7 +1181,7 @@ namespace Chess
             {-2.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -2.0}
         };
 
-        private static double[,] bishopEvalBlack = reverseArray(bishopEvalWhite);
+        private static double[,] bishopEvalBlack = ReverseArray(bishopEvalWhite);
 
         private static double[,] rookEvalWhite = {
             {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
@@ -1199,7 +1194,7 @@ namespace Chess
             {0.0, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0}
         };
 
-        private static double[,] rookEvalBlack = reverseArray(rookEvalWhite);
+        private static double[,] rookEvalBlack = ReverseArray(rookEvalWhite);
 
         private static double[,] evalQueen = {
             {-2.0, -1.0, -1.0, -0.5, -0.5, -1.0, -1.0, -2.0},
@@ -1223,8 +1218,8 @@ namespace Chess
             {2.0,  3.0,  1.0,  0.0,  0.0,  1.0,  3.0,  2.0}
         };
 
-        private static double[,] kingEvalBlack = reverseArray(kingEvalWhite);
-        // Дальше какя-то логика с кнопками
+        private static double[,] kingEvalBlack = ReverseArray(kingEvalWhite);
+
         private void OnAndFillAttackButtons(int x, int y)
         {
             List<Button> listButtons = new List<Button>();
@@ -1256,7 +1251,7 @@ namespace Chess
             List<Button> listButtons = new List<Button>();
             GetLogicalChildCollection(this, listButtons);
             for (int i = 0; i < 64; i++)
-            {                  
+            {
                 listButtons[i].IsEnabled = flag;
                 listButtons[i].Opacity = 0;
                 if (flag == false)
@@ -1267,10 +1262,8 @@ namespace Chess
                 }
                 if (turn > 1)
                 {
-                    listButtons[LastMove1].IsEnabled = true;
                     listButtons[LastMove1].Opacity = 0.5;
                     listButtons[LastMove1].Background = new SolidColorBrush(Colors.DarkSlateGray);
-                    listButtons[LastMove2].IsEnabled = true;
                     listButtons[LastMove2].Opacity = 0.5;
                     listButtons[LastMove2].Background = new SolidColorBrush(Colors.DarkSlateGray);
                 }
